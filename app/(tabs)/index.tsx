@@ -1,74 +1,156 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  TextInput,
+  Button,
+} from "react-native";
+import React, { useEffect, useState } from "react";
+import mqtt from "mqtt";
+import useMqtt from "@/hooks/useMqtt";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const app = () => {
+  const [interval, setInterval] = useState("");
+  const [macMessage, setMacMessage] = useState("");
 
-export default function HomeScreen() {
+  const { publish, connect, disconnect } = useMqtt({
+    "demo/#": handleDemoEvent,
+    "test/+/demo/+": (parts, message) => {
+      console.log("subscribe", "test/+/demo/+", parts, message);
+    },
+  });
+
+  const MqttConnection = () => {
+    connect();
+  };
+
+  const doDisconnect = () => {
+    disconnect();
+  };
+
+  function handleDemoEvent(parts, message) {
+    console.log("subscribe", "demo/#", parts, message);
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <ImageBackground
+      source={require("@/assets/images/react-logo.png")}
+      resizeMode="cover"
+      style={styles.image}
+    >
+      <View style={styles.container}>
+        {/* Interval Input */}
+        <Text style={styles.title}>MQTT Connections:</Text>
+        <Text style={styles.title}>Interval</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter interval (e.g., 5000)"
+          keyboardType="numeric"
+          inputMode="numeric"
+          textContentType="telephoneNumber"
+          value={interval}
+          onChangeText={(text) => {
+            // Accept only digits
+            if (/^\d*$/.test(text)) {
+              setInterval(text);
+            }
+          }}
+          defaultValue="5"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+
+        {/* MAC Address Input */}
+        <Text style={styles.title}>MAC Address (00:1A:7D:DA:71:13)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter MAC (e.g., 00:1A:7D:DA:71:13)"
+          autoCapitalize="characters"
+          value={macMessage}
+          onChangeText={setMacMessage}
+          defaultValue="00:1A:7D:DA:71:13"
+        />
+
+        {/* Button Connect MQTT */}
+
+        {/* <Pressable style={styles.button} onPress={toggleMqttConnection}>
+          <Text style={styles.buttonText}>
+            {mqttClient ? "Disconnect MQTT" : "Connect MQTT"}
+          </Text>
+        </Pressable> */}
+        <View style={styles.button}>
+          <Button title="Start MQTT" onPress={MqttConnection} />
+
+          {/* Button diconnected MQTT */}
+          <Button title="STOP MQTT" onPress={doDisconnect} />
+        </View>
+
+        <View style={styles.button}>
+          <Button title="Start GPS" onPress={MqttConnection} />
+
+          {/* Button diconnected MQTT */}
+          <Button title="STOP GPS" onPress={doDisconnect} />
+        </View>
+      </View>
+    </ImageBackground>
   );
-}
+};
+
+export default app;
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  input: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    backgroundColor: "#fff",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  container: {
+    flex: 1,
+    flexDirection: "column",
+
+    justifyContent: "center",
+    marginHorizontal: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  image: {
+    width: "100%",
+    height: "100%",
+    flex: 1,
+    resizeMode: "cover",
+    justifyContent: "center",
+  },
+  link: {
+    color: "white",
+    fontSize: 42,
+    fontWeight: "bold",
+    textAlign: "center",
+    textDecorationLine: "underline",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 4,
+  },
+
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+    color: "#333",
+  },
+  button: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    // backgroundColor: "#1E90FF",
+    // paddingVertical: 14,
+    // paddingHorizontal: 20,
+    // borderRadius: 10,
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+    justifyContent: "space-between",
+    flexDirection: "row",
   },
 });
